@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#e94560">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XCX Gear DB">
+<meta name="application-name" content="XCX Gear DB">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="mask-icon" href="icon.svg" color="#e94560">
+<title>XCX Gear DB - Xenoblade Chronicles X Equipment Database</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0e0e12; color: #e0e0e0; min-height: 100vh; }
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 24px 32px; border-bottom: 2px solid #e94560; }
+  .header h1 { font-size: 28px; color: #fff; }
+  .header p { color: #aaa; margin-top: 4px; font-size: 14px; }
+  .header span { color: #e94560; }
+  .controls { background: #1a1a24; padding: 16px 32px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; border-bottom: 1px solid #2a2a3a; position: sticky; top: 0; z-index: 100; }
+  .controls input, .controls select { background: #252535; border: 1px solid #3a3a4a; color: #e0e0e0; padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none; }
+  .controls input:focus, .controls select:focus { border-color: #e94560; }
+  .controls input { flex: 1; min-width: 200px; }
+  .controls select { min-width: 130px; cursor: pointer; }
+  .tab-bar { display: flex; background: #1a1a24; border-bottom: 1px solid #2a2a3a; }
+  .tab { padding: 12px 24px; cursor: pointer; font-size: 14px; font-weight: 600; color: #888; border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab:hover { color: #ccc; }
+  .tab.active { color: #e94560; border-bottom-color: #e94560; }
+  .count-badge { background: #252535; color: #aaa; font-size: 12px; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+  .content { padding: 20px 32px; max-width: 1400px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .card { background: #1a1a24; border: 1px solid #252535; border-radius: 8px; padding: 16px; transition: border-color .15s; }
+  .card:hover { border-color: #3a3a5a; }
+  .card .name { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+  .card .meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .card .meta span { display: inline-block; margin-right: 12px; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; margin-right: 4px; margin-bottom: 4px; }
+  .tag-weapon { background: #2d1b69; color: #c4a0ff; }
+  .tag-armor { background: #1b3a2d; color: #7ae0a0; }
+  .tag-schematic { background: #69301b; color: #ffb080; }
+  .tag-guide { background: #1b2d3a; color: #80c0ff; }
+  .tag-manu { background: #2a2a3a; color: #ccc; }
+  .tag-tier { background: #3a1a2a; color: #ff80a0; }
+  .attr { font-size: 12px; color: #aaa; line-height: 1.6; }
+  .attr strong { color: #ccc; }
+  .empty { text-align: center; padding: 48px; color: #666; font-size: 16px; }
+  .badge { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; font-weight: 700; text-transform: uppercase; margin-left: 4px; }
+  .badge-s { background: #ffd700; color: #000; }
+  .badge-a { background: #c0c0c0; color: #000; }
+  .badge-b { background: #cd7f32; color: #fff; }
+  .badge-easy { background: #2a6e3a; color: #8f8; }
+  .badge-medium { background: #6e5a2a; color: #ff8; }
+  .badge-hard { background: #6e2a2a; color: #f88; }
+  .stats { font-size: 12px; color: #999; display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; padding-top: 6px; border-top: 1px solid #252535; }
+  .stat-atk { font-size: 16px; color: #fff; }
+  .stat-atk strong { font-size: 22px; color: #ffd700; }
+  .stat-range { font-size: 11px; color: #888; }
+  .stat-icon { opacity: 0.8; }
+  .extra-stats { font-size: 11px; color: #777; display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; padding-top: 4px; border-top: 1px solid #1a1a2a; }
+  .atk-bar { height: 3px; background: #252535; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .atk-fill { height: 100%; background: linear-gradient(90deg, #e94560, #ffd700); border-radius: 2px; transition: width .3s; }
+  .tag-attr { background: #1a2a3a; color: #6ab0f3; }
+  .def-fill { background: linear-gradient(90deg, #2a6e3a, #7ae0a0); }
+  .diff-fill-easy { background: linear-gradient(90deg, #2a6e3a, #7ae0a0); }
+  .diff-fill-medium { background: linear-gradient(90deg, #6e5a2a, #ffd700); }
+  .diff-fill-hard { background: linear-gradient(90deg, #6e2a2a, #e94560); }
+  .card.guide .name { color: #80c0ff; }
+  .card.weapon .name { color: #c4a0ff; }
+  .card.armor .name { color: #7ae0a0; }
+  .card.schematic .name { color: #ffb080; }
+  .location-link { color: #e94560; text-decoration: none; font-weight: 600; }
+  .location-link:hover { text-decoration: underline; }
+  .wiki-link { color: #6ab0f3; text-decoration: none; border-bottom: 1px dotted #6ab0f355; }
+  .wiki-link:hover { color: #8fcbff; border-bottom-color: #8fcbff; }
+  @media (max-width: 640px) { .controls { padding: 12px 16px; } .content { padding: 12px 16px; } .grid { grid-template-columns: 1fr; } .header { padding: 16px; } .header h1 { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>XCX <span>Gear</span> DB</h1>
+  <p>Xenoblade Chronicles X — High-Level Weapons, Armor, Schematics &amp; Farming Guide</p>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" data-tab="weapons">Weapons <span class="count-badge" id="count-weapons">0</span></div>
+  <div class="tab" data-tab="armor">Armor <span class="count-badge" id="count-armor">0</span></div>
+  <div class="tab" data-tab="schematics">Schematics <span class="count-badge" id="count-schematics">0</span></div>
+  <div class="tab" data-tab="guides">Farming Guides <span class="count-badge" id="count-guides">0</span></div>
+</div>
+
+<div class="controls">
+  <input type="text" id="search" placeholder="Search by name, enemy, location, manufacturer..." />
+  <select id="filter-manu"><option value="">All Manufacturers</option></select>
+  <select id="filter-type"><option value="">All Types / Weight</option></select>
+  <select id="filter-tier"><option value="">All Tiers</option></select>
+  <select id="filter-sort"><option value="">Sort</option></select>
+</div>
+
+<div class="content">
+  <div id="results" class="grid"></div>
+</div>
+
+<script>
+const dataUrl = 'weapons.json';
+let allData = {};
+let activeTab = 'weapons';
+let currentData = [];
+
+async function loadData() {
+  try {
+    const res = await fetch(dataUrl);
+    allData = await res.json();
+    initFilters();
+    ['weapons','armor','schematics','guides'].forEach(t => {
+      const m = { weapons: 'weapons', armor: 'armor', schematics: 'schematics', guides: 'farmingGuides' };
+      document.getElementById('count-' + t).textContent = (allData[m[t]] || []).length;
+    });
+    switchTab('weapons');
+  } catch (e) {
+    document.getElementById('results').innerHTML = '<div class="empty">Failed to load data. Make sure weapons.json is in the same folder.</div>';
+  }
+}
+
+function initFilters() {
+  const tierSet = new Set();
+  [...allData.weapons, ...allData.armor, ...allData.schematics, ...allData.farmingGuides].forEach(item => {
+    if (item.tier) tierSet.add(item.tier);
+  });
+  populateSelect('filter-tier', tierSet);
+}
+
+function populateSelect(id, set) {
+  const sel = document.getElementById(id);
+  const sorted = [...set].sort();
+  sorted.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+}
+
+function repopulateSelect(id, arr) {
+  const sel = document.getElementById(id);
+  const val = sel.value;
+  sel.innerHTML = '<option value="">' + (id === 'filter-manu' ? 'All Manufacturers' : 'All Tiers') + '</option>';
+  const set = [...new Set(arr)].sort();
+  set.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+  sel.value = set.includes(val) ? val : '';
+}
+
+function repopulateTypeSelect() {
+  const sel = document.getElementById('filter-type');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">All Types / Weight</option>';
+  const set = [...new Set(currentData.map(i => i.type).filter(Boolean))].sort();
+  set.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+  sel.value = set.includes(val) ? val : '';
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    switchTab(tab.dataset.tab);
+  });
+});
+
+function switchTab(tab) {
+  try {
+    activeTab = tab;
+    const map = { weapons: 'weapons', armor: 'armor', schematics: 'schematics', guides: 'farmingGuides' };
+    currentData = allData[map[tab]] || [];
+    if (tab === 'guides') console.log('Guides data:', currentData.length);
+    document.getElementById('count-' + tab).textContent = currentData.length;
+    document.getElementById('search').value = '';
+    document.getElementById('filter-manu').value = '';
+    document.getElementById('filter-type').value = '';
+    document.getElementById('filter-tier').value = '';
+    document.getElementById('filter-sort').value = '';
+    repopulateSelect('filter-manu', currentData.map(i => i.manufacturer).filter(Boolean));
+    repopulateSelect('filter-tier', currentData.map(i => i.tier).filter(Boolean));
+    repopulateTypeSelect();
+    repopulateSortSelect();
+    updateControlsForTab(tab);
+    render();
+  } catch (e) {
+    console.error('switchTab error:', e);
+    document.getElementById('results').innerHTML = '<div class="empty">Error loading tab: ' + e.message + '</div>';
+  }
+}
+
+const sortOptions = {
+  weapons: [
+    ['name-asc', 'Name A-Z'], ['name-desc', 'Name Z-A'],
+    ['atk-desc', 'ATK ↓'], ['atk-asc', 'ATK ↑'],
+    ['lvl-desc', 'Level ↓'], ['lvl-asc', 'Level ↑']
+  ],
+  armor: [
+    ['name-asc', 'Name A-Z'], ['name-desc', 'Name Z-A'],
+    ['def-desc', 'DEF ↓'], ['def-asc', 'DEF ↑'],
+    ['lvl-desc', 'Level ↓'], ['lvl-asc', 'Level ↑']
+  ],
+  schematics: [
+    ['name-asc', 'Name A-Z'], ['name-desc', 'Name Z-A'],
+    ['atk-desc', 'ATK ↓'], ['atk-asc', 'ATK ↑'],
+    ['type', 'Type']
+  ],
+  guides: [
+    ['title-asc', 'Title A-Z'], ['title-desc', 'Title Z-A'],
+    ['difficulty', 'Difficulty'], ['type', 'Type']
+  ]
+};
+
+function repopulateSortSelect() {
+  const sel = document.getElementById('filter-sort');
+  const opts = sortOptions[activeTab] || [];
+  sel.innerHTML = '<option value="">Sort</option>';
+  opts.forEach(([v, label]) => {
+    const o = document.createElement('option');
+    o.value = v;
+    o.textContent = label;
+    sel.appendChild(o);
+  });
+}
+
+function sortData(arr) {
+  const val = document.getElementById('filter-sort').value;
+  if (!val) return arr;
+  const [field, dir] = val.split('-');
+  const desc = dir === 'desc';
+  const copy = [...arr];
+  copy.sort((a, b) => {
+    let va, vb;
+    switch (field) {
+      case 'name': va = (a.name||'').toLowerCase(); vb = (b.name||'').toLowerCase(); break;
+      case 'title': va = (a.title||'').toLowerCase(); vb = (b.title||'').toLowerCase(); break;
+      case 'atk': va = parseInt(a.craftedAtk || a.attack) || 0; vb = parseInt(b.craftedAtk || b.attack) || 0; break;
+      case 'def': va = parseInt(a.defense) || 0; vb = parseInt(b.defense) || 0; break;
+      case 'lvl': va = parseInt(a.minLevel) || 0; vb = parseInt(b.minLevel) || 0; break;
+      case 'difficulty': va = (a.difficulty||'').toLowerCase(); vb = (b.difficulty||'').toLowerCase(); break;
+      case 'type': va = (a.type||'').toLowerCase(); vb = (b.type||'').toLowerCase(); break;
+      default: return 0;
+    }
+    if (va < vb) return desc ? 1 : -1;
+    if (va > vb) return desc ? -1 : 1;
+    return 0;
+  });
+  return copy;
+}
+
+function updateControlsForTab(tab) {
+  const showManu = tab === 'weapons' || tab === 'armor' || tab === 'schematics';
+  const showType = tab === 'weapons' || tab === 'armor' || tab === 'schematics';
+  const showTier = tab === 'weapons';
+  document.getElementById('filter-manu').style.display = showManu ? '' : 'none';
+  document.getElementById('filter-type').style.display = showType ? '' : 'none';
+  document.getElementById('filter-tier').style.display = showTier ? '' : 'none';
+}
+
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('filter-manu').addEventListener('change', render);
+document.getElementById('filter-type').addEventListener('change', render);
+document.getElementById('filter-tier').addEventListener('change', render);
+document.getElementById('filter-sort').addEventListener('change', render);
+
+function render() {
+  try {
+    const q = document.getElementById('search').value.toLowerCase().trim();
+    const fManu = document.getElementById('filter-manu').value;
+    const fType = document.getElementById('filter-type').value;
+    const fTier = document.getElementById('filter-tier').value;
+
+    let filtered = currentData.filter(item => {
+      if (fManu && item.manufacturer !== fManu) return false;
+      if (fType && item.type !== fType) return false;
+      if (fTier && item.tier !== fTier) return false;
+      if (!q) return true;
+      const searchStr = JSON.stringify(Object.values(item)).toLowerCase();
+      return searchStr.includes(q);
+    });
+
+    filtered = sortData(filtered);
+
+    const container = document.getElementById('results');
+    if (filtered.length === 0) {
+      if (activeTab === 'guides') container.innerHTML = '<div class="empty">No guides match filters. Search or adjust filters above.</div>';
+      else container.innerHTML = '<div class="empty">No results found. Try a different search or filter.</div>';
+      return;
+    }
+    const html = filtered.map(item => renderCard(item, activeTab)).join('');
+    container.innerHTML = html;
+    if (activeTab === 'guides' && !html) {
+      container.innerHTML = '<div class="empty">Guide data loaded but rendering failed. Check console.</div>';
+    }
+  } catch (e) {
+    console.error('render error:', e);
+    document.getElementById('results').innerHTML = '<div class="empty">Error rendering: ' + e.message + '</div>';
+  }
+}
+
+function renderCard(item, tab) {
+  switch (tab) {
+    case 'weapons': return renderWeapon(item);
+    case 'armor': return renderArmor(item);
+    case 'schematics': return renderSchematic(item);
+    case 'guides': return renderGuide(item);
+    default: return '';
+  }
+}
+
+function getAttr(type) {
+  const m = {
+    'Gatling Gun': 'Thermal', Raygun: 'Ether', 'Psycho Launchers': 'Gravity',
+    Javelin: 'Electric', 'Sniper Rifle': 'Beam', 'Photon Saber': 'Beam',
+    'Assault Rifle': 'Physical', 'Dual Guns': 'Physical', 'Dual Swords': 'Physical',
+    Longsword: 'Physical', Knife: 'Physical', Shield: 'Physical', Multigun: 'Physical'
+  };
+  return m[type] || 'Physical';
+}
+
+function renderWeapon(w) {
+  const tierBadge = w.tier ? `<span class="tag tag-tier">${escapeHtml(w.tier)}</span>` : '';
+  const sRating = getRating(w.type);
+  const attr = getAttr(w.type);
+  const minAtk = w.attack - Math.round(w.attack * (w.stability||0) / 100);
+  const maxAtk = w.attack + Math.round(w.attack * (w.stability||0) / 100);
+  const barPct = Math.min(100, Math.round((w.attack / 500) * 100));
+  return `
+    <div class="card weapon">
+      <div class="name">${escapeHtml(w.name)} ${sRating}</div>
+      <div class="meta">
+        <span class="stat-icon">⚔ ${escapeHtml(w.type)}</span>
+        <span>🏭 ${escapeHtml(w.manufacturer)}</span>
+        <span>🎯 Lv${w.minLevel}</span>
+      </div>
+      <div>${tierBadge}<span class="tag tag-attr">${attr}</span><span class="tag tag-manu">${escapeHtml(w.manufacturer)}</span></div>
+      <div class="atk-bar"><div class="atk-fill" style="width:${barPct}%"></div></div>
+      <div class="stats">
+        <span class="stat-atk">ATK <strong>${w.attack}</strong> <span class="stat-range">(${w.stability ? minAtk+'-'+maxAtk : '—'})</span></span>
+        ${w.stability ? `<span>±${w.stability}%</span>` : ''}
+        ${w.ammo ? `<span class="stat-icon">● ${w.ammo}</span>` : ''}
+        ${w.cooldown ? `<span>⏱ ${w.cooldown}</span>` : ''}
+        ${w.tpGain ? `<span>⚡ +${w.tpGain}</span>` : ''}
+      </div>
+      <div class="extra-stats">
+        ${w.category ? `<span>📦 ${escapeHtml(w.category)}</span>` : ''}
+        <span>🔧 3 slots</span>
+        <span>🎲 3 traits</span>
+      </div>
+      <div class="attr" style="margin-top:6px"><strong>Drop:</strong> ${wikiLink(w.dropSource || '')}</div>
+      ${w.farmTips ? `<div class="attr"><strong>Tip:</strong> ${escapeHtml(w.farmTips)}</div>` : ''}
+    </div>`;
+}
+
+function renderArmor(a) {
+  const def = parseInt(a.defense) || 0;
+  const barPct = Math.min(100, (def / 60) * 100);
+  const wearIcons = { Light: '🪶', Medium: '🛡️', Heavy: '🛡️', Skell: '🤖', BLADE: '👤' };
+  return `
+    <div class="card armor">
+      <div class="name">${escapeHtml(a.name)}</div>
+      <div class="meta">
+        <span>${wearIcons[a.type] || ''} ${escapeHtml(a.manufacturer)}</span>
+        <span>${escapeHtml(a.type)}</span>
+        <span>${escapeHtml(a.piece)}</span>
+        ${a.minLevel ? `<span>Lv${a.minLevel}</span>` : ''}
+      </div>
+      <div><span class="tag tag-manu">${escapeHtml(a.manufacturer)}</span><span class="tag tag-armor">${escapeHtml(a.type)}</span></div>
+      ${def ? `<div class="atk-bar" style="margin-top:6px"><div class="atk-fill def-fill" style="width:${barPct}%"></div></div>
+      <div class="stats"><span class="stat-atk">DEF <strong>${def}</strong></span></div>` : ''}
+      <div class="attr" style="margin-top:6px"><strong>Enemy:</strong> ${wikiLink(a.enemySpecies || '')}</div>
+      ${a.keyTyrant ? `<div class="attr"><strong>Tyrant:</strong> ${wikiLink(a.keyTyrant)}</div>` : ''}
+      <div class="attr"><strong>Location:</strong> ${wikiLink(a.location || '')}</div>
+      ${a.notes ? `<div class="attr"><strong>Notes:</strong> ${escapeHtml(a.notes)}</div>` : ''}
+    </div>`;
+}
+
+function renderSchematic(s) {
+  if (s.type === 'Skell Frame') {
+    return `
+      <div class="card schematic">
+        <div class="name">${escapeHtml(s.name)}</div>
+        <div class="meta">
+          <span>${escapeHtml(s.type)}</span>
+          ${s.weight ? `<span>⚖ ${escapeHtml(s.weight)}</span>` : ''}
+          <span>🏭 ${escapeHtml(s.manufacturer)}</span>
+          ${s.file ? `<span>📄 ${escapeHtml(s.file)}</span>` : ''}
+        </div>
+        <div><span class="tag tag-manu">${escapeHtml(s.manufacturer)}</span><span class="tag tag-armor">${escapeHtml(s.weight||'')}</span></div>
+        ${s.unlock ? `<div class="attr" style="margin-top:6px"><strong>Unlock:</strong> ${escapeHtml(s.unlock)}</div>` : ''}
+        <div class="attr"><strong>Enemy:</strong> ${wikiLink(s.enemy || '')}</div>
+        <div class="attr"><strong>Location:</strong> ${wikiLink(s.location || '')}</div>
+        ${s.notes ? `<div class="attr"><strong>Notes:</strong> ${escapeHtml(s.notes)}</div>` : ''}
+      </div>`;
+  }
+  const isSW = s.type.startsWith('Skell Superweapon');
+  const isArmor = s.type.endsWith('Wear');
+  const attr = s.attribute || getAttr(s.type) || 'Physical';
+  const atk = parseInt(s.craftedAtk) || 0;
+  const def = parseInt(s.defense) || 0;
+  const elAtk = parseInt(s.elementAtk) || 0;
+  const elDef = parseInt(s.elementDef) || 0;
+  const atkBarPct = isSW ? Math.min(100, Math.round((atk / 100000) * 100)) : Math.min(100, Math.round((atk / 500) * 100));
+  const defBarPct = Math.min(100, Math.round(((isArmor ? def : elDef) / 60) * 100));
+  return `
+    <div class="card schematic">
+      <div class="name">${escapeHtml(s.name)}</div>
+      <div class="meta">
+        <span>${escapeHtml(s.type)}</span>
+        <span>🏭 ${escapeHtml(s.manufacturer)}</span>
+        ${s.file ? `<span>📄 ${escapeHtml(s.file)}</span>` : ''}
+      </div>
+      <div><span class="tag tag-manu">${escapeHtml(s.manufacturer)}</span>${isArmor ? `<span class="tag tag-armor">${escapeHtml(s.piece||'')}</span>` : `<span class="tag tag-attr">${attr}</span>`}</div>
+      ${atk ? `<div class="atk-bar"><div class="atk-fill" style="width:${atkBarPct}%"></div></div>
+      <div class="stats"><span class="stat-atk">ATK <strong>${atk.toLocaleString()}</strong></span></div>` : ''}
+      ${def ? `<div class="atk-bar"><div class="atk-fill def-fill" style="width:${defBarPct}%"></div></div>
+      <div class="stats"><span class="stat-atk">DEF <strong>${def}</strong></span></div>` : ''}
+      <div class="extra-stats">${elAtk > 0 ? `<span>⚡ Element ATK: +${elAtk.toLocaleString()}</span>` : ''}${elDef > 0 ? `<span>🛡 Element DEF: ${elDef}</span>` : ''}</div>
+      ${isSW ? `<div style="margin-top:4px;font-size:11px;color:#777"><span>Lv60</span></div>` : isArmor ? '' : `<div style="margin-top:4px;font-size:11px;color:#777"><span>Lv60 • 🔧 3 slots • 🎲 3 traits</span></div>`}
+      ${s.unlock ? `<div class="attr" style="margin-top:6px"><strong>Unlock:</strong> ${escapeHtml(s.unlock)}</div>` : ''}
+      <div class="attr"><strong>Enemy:</strong> ${wikiLink(s.enemy || '')}</div>
+      <div class="attr"><strong>Location:</strong> ${wikiLink(s.location || '')}</div>
+      ${s.notes ? `<div class="attr"><strong>Notes:</strong> ${escapeHtml(s.notes)}</div>` : ''}
+    </div>`;
+}
+
+function renderGuide(g) {
+  try {
+    const diff = (g.difficulty || '').toLowerCase();
+    const diffBadge = g.difficulty ? `<span class="badge badge-${diff}">${escapeHtml(g.difficulty)}</span>` : '';
+    const diffFrac = { easy: 33, medium: 66, hard: 100 }[diff] || 50;
+    return `
+      <div class="card guide">
+        <div class="name">${escapeHtml(g.title || '')} ${diffBadge}</div>
+        <div class="meta"><span>${escapeHtml(g.type || '')}</span></div>
+        <div><span class="tag tag-guide">${escapeHtml(g.type || '')}</span></div>
+        <div class="atk-bar" style="margin-top:6px"><div class="atk-fill diff-fill-${diff}" style="width:${diffFrac}%"></div></div>
+        ${g.enemy ? `<div class="attr" style="margin-top:6px"><strong>Enemy:</strong> ${wikiLink(g.enemy)}</div>` : ''}
+        <div class="attr"><strong>Location:</strong> ${wikiLink(g.location || '')}</div>
+        ${g.conditions ? `<div class="attr"><strong>Conditions:</strong> ${escapeHtml(g.conditions)}</div>` : ''}
+        <div class="attr"><strong>Description:</strong> ${escapeHtml(g.description || '')}</div>
+      </div>`;
+  } catch (e) {
+    console.error('renderGuide error:', e, g);
+    return '<div class="card guide"><div class="name">Error rendering guide</div></div>';
+  }
+}
+
+function escapeHtml(s) {
+  if (typeof s !== 'string') return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+const wikiPages = {
+  'Aeviter': 'Aeviter', 'Agnes, the Divine-scaled': 'Agnes,_the_Divine-Scaled',
+  'Alithios, the Indignant': 'Alithios,_the_Indignant', 'Auravis': 'Auravis',
+  'Balduino, the Wicked-eyed': 'Balduino,_the_Wicked-Eyed',
+  'Barnabas, the Despot': 'Barnabas,_the_Despot', 'Berthold, the Blue-eyed': 'Berthold,_the_Blue-Eyed',
+  'Blatta': 'Blatta', 'Calore, the Lava-Walker': 'Calore,_the_Lava_Walker',
+  'Caro': 'Caro', 'Ceasar, the Hundred-eyed': 'Ceasar,_the_Hundred-Eyed',
+  'Cervus': 'Cervus', 'Chimera': 'Chimera', 'Cinicula': 'Cinicula',
+  'Colubrim': 'Colubrim', 'Conjurer Cervus': 'Conjurer_Cervus', 'Coronid': 'Coronid',
+  'Dadaan, the Strongest': 'Dadaan,_the_Strongest_Prone',
+  'Decapotamon': 'Decapotamon', 'Definian': 'Definian', 'Forfex': 'Forfex',
+  'Feliciano, the All-Seeing': 'Feliciano,_the_All-Seeing',
+  'Durvin, the Perceptive': 'Durvin,_the_Perceptive', 'Gothard, the Intimidating': 'Gothard,_the_Intimidating',
+  'Gularth': 'Gularth', 'Hartmut, the Calamity': 'Hartmut,_the_Calamity',
+  'Hayreddin, the Territorial': 'Hayreddin,_the_Territorial_(day)',
+  'Elvira, the Talondrake': 'Elvira,_the_Talondrake_(day)',
+  'Hiro, the Priceless': 'Hiro,_the_Priceless', 'Ictus': 'Ictus',
+  'Izgnanie, the Smoldering': 'Izgnanie,_the_Smoldering', 'Jacul': 'Jacul',
+  'Joker, the Unknowable': 'Joker,_the_Unknowable', 'Lazuli Forfex': 'Lazuli_Forfex',
+  'Liceor': 'Liceor', 'Lophid': 'Lophid', 'Lost Caro': 'Lost_Caro',
+  'Luciel, the Eternal': 'Luciel,_the_Eternal',
+  'Fernando, the Immovable': 'Fernando,_the_Immovable',
+  'Lugalbanda, the Wanderer-king': 'Lugalbanda,_the_Wanderer-King',
+  'Marnuck': 'Marnuck', 'Millepod': 'Millepod', 'Millesaur': 'Millesaur',
+  'Milsaadi': 'Milsaadi', 'Necro, the Cavelord': 'Necro,_the_Cavelord',
+  'Petramand': 'Petramand',
+  'Pjotr, the Shepherd': 'Pyotr,_the_Shepherd',
+  'Prone': 'Prone_(XCX)', 'Sacrifole': 'Sacrifole', 'Saltat': 'Saltat',
+  'Scirpo': 'Scirpo', 'Simius': 'Simius', 'Sphinx': 'Sphinx',
+  'Stream Jacul': 'Stream_Jacul', 'Sylooth': 'Sylooth', 'Terenty, the Blademaster': 'Terenty,_the_Blademaster',
+  'Tersqual': 'Tersqual', 'Vesper': 'Vesper_(XCX)', 'Vigent': 'Vigent',
+  'Visigel': 'Visigel', 'Volcannon Vigent': 'Volcannon_Vigent',
+  'Wenzel, the Inebriated': 'Wenzel,_the_Inebriated',
+  'WR512: Urdu': 'WR512:_Urdu',
+  'Xair, the Cerrulean Walker': 'Xair,_the_Cerrulean_Walker',
+  'Cauldros': 'Cauldros', 'Primordia': 'Primordia', 'Noctilum': 'Noctilum',
+  'Sylvalum': 'Sylvalum', 'Oblivia': 'Oblivia',
+  'NLA': 'NLA_(XCX)', 'Ganglion Antropolis': 'Ganglion_Antropolis',
+  'Bestial Utopia': 'Bestial_Utopia', 'Divine Roost': 'Divine_Roost',
+  'Kitsune Stronghold': 'Kitsune_Stronghold', 'Sandsprint Cavity': 'Sandsprint_Cavity',
+  'Vitriol Cesspool': 'Vitriol_Cesspool', 'Noctilucent Sphere Interior': 'Noctilucent_Sphere_Interior',
+  'Riorl Cesspool': 'Vitriol_Cesspool', 'Drop Shaft': 'Drop_Shaft',
+  'Janpath Lake': 'Janpath_Lake', 'Narcissus Tree': 'Narcissus_Tree',
+  'East Gate Plain': 'East_Gate_Plain', 'Stonelattice Cavern': 'Stonelattice_Cavern',
+  'Capital Wreckage': 'Capital_Wreckage', 'Sunset Falls': 'Sunset_Falls',
+  'Phosphor Lake': 'White_Phosphor_Lake', 'Mount M\'gando': 'Mount_M\'gando',
+  'Big Ravine': 'Central_Ibra_Ravine', 'Yawning Giant': 'Yawning_Giant',
+  'Fortress': 'Scabland_Fortress', 'Beast\'s Lair': 'Beast\'s_Lair',
+  'Sea Whisper Valley': 'Sea_Whisper_Valley',
+  'Decapotamon': 'Decapotamon',
+  'Seidr': 'Seidr',
+  'Yggralith': 'Yggralith',
+};
+
+function wikiUrl(text) {
+  const key = text.trim();
+  if (wikiPages[key]) return wikiPages[key];
+  const noComma = key.replace(/,/g, '');
+  if (wikiPages[noComma]) return wikiPages[noComma];
+  const norm = noComma.replace(/\(.*?\)/g, '').replace(/[Ll][Vv]\s*\d+.*/g, '').trim().replace(/\s+/g, '_');
+  return norm;
+}
+
+function wikiLink(text) {
+  if (!text) return '';
+  const parts = text.split(/\s*\/\s*/);
+  const links = parts.map(p => {
+    const p2 = p.replace(/\(.*?\)/g, '').replace(/[Ll][Vv]\s*\d+.*/g, '').replace(/,?\s*Lv.*/g, '').trim().replace(/^(\w+)\s+(the|the)\s+/i, '$1, the ');
+    if (!p2) return escapeHtml(p);
+    const slug = wikiUrl(p2);
+    const url = slug ? 'https://xenoserieswiki.org/wiki/' + encodeURIComponent(slug).replace(/%2F/g, '/').replace(/%3A/g, ':') : '';
+    return url ? `<a href="${url}" target="_blank" rel="noopener" class="wiki-link">${escapeHtml(p2)}</a>` : escapeHtml(p2);
+  });
+  return links.join(' <span style="color:#555">/</span> ');
+}
+
+function getRating(type) {
+  const s = { Longsword: 'S', 'Gatling Gun': 'S', Raygun: 'S', Knife: 'A', 'Sniper Rifle': 'A', 'Dual Guns': 'A', 'Dual Swords': 'A', 'Photon Saber': 'B', 'Assault Rifle': 'B', Javelin: 'B', 'Psycho Launchers': 'B', Shield: 'C', Multigun: 'D' };
+  const r = s[type];
+  return r ? `<span class="badge badge-${r.toLowerCase()}">${r}</span>` : '';
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+loadData();
+</script>
+</body>
+</html>
