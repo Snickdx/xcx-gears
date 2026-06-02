@@ -1,5 +1,15 @@
 const CACHE = 'xcx-gear-db-v1';
-const FILES = ['/', '/index.html', '/weapons.json', '/manifest.json', '/icon.svg', '/icon-192.png', '/icon-512.png'];
+const BASE = self.location.href.replace(/\/[^/]*$/, '/');
+
+const FILES = [
+  BASE,
+  BASE + 'index.html',
+  BASE + 'weapons.json',
+  BASE + 'manifest.json',
+  BASE + 'icon.svg',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -22,6 +32,6 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, copy));
       }
       return res;
-    }).catch(() => caches.match('/')))
+    }).catch(() => caches.match(BASE)))
   );
 });

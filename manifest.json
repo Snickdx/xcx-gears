@@ -2,15 +2,20 @@
   "name": "XCX Gear DB",
   "short_name": "XCX Gear DB",
   "description": "Xenoblade Chronicles X — High-Level Weapons, Armor, Schematics & Farming Guide",
-  "start_url": "/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0e0e12",
   "theme_color": "#e94560",
   "categories": ["games", "utilities"],
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "screenshot-wide.png", "sizes": "1280x800", "type": "image/png", "form_factor": "wide", "label": "XCX Gear DB desktop view" },
+    { "src": "screenshot-narrow.png", "sizes": "720x1280", "type": "image/png", "label": "XCX Gear DB mobile view" }
   ]
 }
